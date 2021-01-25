@@ -12,7 +12,8 @@ PlantSim(
   growth_rate,
   interaction_matrix,
   st_portion,
-  surv_rate
+  surv_rate,
+  filesave = NULL
 )
 }
 \arguments{
@@ -31,6 +32,8 @@ PlantSim(
 \item{st_portion}{The portion of the seedlings that stay at the parental plot.}
 
 \item{surv_rate}{The survival rate for each plot and each species. It could be universally same.}
+
+\item{filesave}{The file name to be saved.}
 }
 \value{
 The abundance matrix for all plots and species through time.
