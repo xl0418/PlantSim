@@ -22,6 +22,6 @@ The abundance matrix for all plots and species through time.
 Inferring the model parameters
 }
 \examples{
-PlantSim(nplot = 5, nspe = 2, t = 10, ini_abundance = matrix(1:10, 5, 2),
+plantsim(nplot = 5, nspe = 2, t = 10, ini_abundance = matrix(1:10, 5, 2),
  growth_rate = 1, interaction_matrix = matrix(0.001, 2, 2), st_portion = 0.7, surv_rate = 1)
 }

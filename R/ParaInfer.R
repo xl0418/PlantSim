@@ -7,7 +7,7 @@
 
 #' @return The abundance matrix for all plots and species through time.
 #' @examples
-#' PlantSim(nplot = 5, nspe = 2, t = 10, ini_abundance = matrix(1:10, 5, 2),
+#' plantsim(nplot = 5, nspe = 2, t = 10, ini_abundance = matrix(1:10, 5, 2),
 #'  growth_rate = 1, interaction_matrix = matrix(0.001, 2, 2), st_portion = 0.7, surv_rate = 1)
 #' @export
 #'
@@ -36,7 +36,7 @@ ParaInfer <- function(data, ngener, nsample, acc_rate = 0.25) {
     pb$tick(0)
     Sys.sleep(3)
     for (sample_ind in c(1:nsample)) {
-      sim_result <- PlantSim(
+      sim_result <- plantsim(
         nplot = nplot,
         nspe = nspe,
         t = nt,

@@ -9,13 +9,15 @@
 #' @param st_portion The portion of the seedlings that stay at the parental plot.
 #' @param surv_rate The survival rate for each plot and each species. It could be universally same.
 #' @param filesave The file name to be saved.
+#' @param st_portion_stochasticity TRUE: add a Poisson sampling to the stay proportion of the seeds. FALSE: no sampling but just the exact proportion of seeds stay.
 #' @return The abundance matrix for all plots and species through time.
+#' @importFrom stats rnorm rpois runif var
 #' @examples
-#' PlantSim(nplot = 5, nspe = 2, t = 10, ini_abundance = matrix(1:10, 5, 2),
+#' plantsim(nplot = 5, nspe = 2, t = 10, ini_abundance = matrix(1:10, 5, 2),
 #'  growth_rate = 1, interaction_matrix = matrix(0.001, 2, 2), st_portion = 0.7, surv_rate = 1)
 #' @export
 #'
-PlantSim <-
+plantsim <-
   function(nplot,
            nspe,
            t,
@@ -24,8 +26,12 @@ PlantSim <-
            interaction_matrix,
            st_portion,
            surv_rate,
-           filesave=NULL) {
-    if (is.matrix(ini_abundance) && all(dim(ini_abundance) == c(nplot, nspe))) {
+           filesave = NULL,
+           st_portion_stochasticity = TRUE
+           ) {
+    if (is.matrix(ini_abundance) &&
+        all(dim(ini_abundance) == c(nplot, nspe))) {
+
     } else {
       return (print(
         "Provide the initial abundances that is at the dim of c(nplot, nspe)."
@@ -54,36 +60,50 @@ PlantSim <-
     }
 
     if (dim(interaction_matrix)[1] != nspe) {
-      return(
-        print("Wrong dim for the interaction matrix.")
-      )
+      return(print("Wrong dim for the interaction matrix."))
     }
     # initialize the community matrix
     plot_abundance <- array(0, dim = c(nplot, nspe, t))
-    plot_abundance[, , 1] <- ini_abundance
+    plot_abundance[, , 1] <- round(ini_abundance)
 
+    # Ricker model
     for (ts in c(1:(t - 1))) {
+      # new generated seedlings for each plot and each spe under the local competition
       new_seedlings <- matrix(0, nrow = nplot, ncol = nspe)
       for (plo in c(1:nplot)) {
         for (spe in c(1:nspe)) {
           new_seedlings[plo, spe] <-
-            plot_abundance[plo, spe, ts] * growth_rate[plo, spe] * exp(1 - plot_abundance[plo, , ts] %*% interaction_matrix[spe,])
+            round(plot_abundance[plo, spe, ts] * growth_rate[plo, spe] * exp(1 - plot_abundance[plo, , ts] %*% interaction_matrix[spe, ]))
           if (is.nan(new_seedlings[plo, spe])) {
             print("Overflow numbers generated!")
             break
           }
-          }
+        }
       }
+      # update seedlings after dispersal
       update_seedlings <- matrix(0, nrow = nplot, ncol = nspe)
-      for (plo in c(1:nplot)) {
-        update_seedlings[plo,] <-
-          st_portion * new_seedlings[plo, ] + (1 - st_portion) * (colSums(new_seedlings) - new_seedlings[plo,]) / (nplot - 1)
+      ## add stochasticity to the stay portion
+      if (st_portion_stochasticity) {
+        stay_seedlings <-  apply(st_portion * new_seedlings, 1:2, rpois, n = 1)
+        dis_seedlings <- new_seedlings - stay_seedlings
+        for (plo in c(1:nplot)) {
+          update_seedlings[plo, ] <-
+            round(stay_seedlings[plo, ] + (colSums(dis_seedlings) - dis_seedlings[plo, ]) / (nplot - 1))
+        }
+      } else {
+        ## no stochasticity to the stay portion
+        for (plo in c(1:nplot)) {
+          update_seedlings[plo, ] <-
+            round(st_portion * new_seedlings[plo,] + (1 - st_portion) * (colSums(new_seedlings) - new_seedlings[plo, ]) / (nplot - 1))
+        }
       }
-
-      plot_abundance[, , ts + 1] <- surv_rate * update_seedlings
+      plot_abundance[, , ts + 1] <- round(surv_rate * update_seedlings)
     }
 
-    if (is.null(filesave)){}
-    else {save(plot_abundance, file = filesave)}
+    if (is.null(filesave)) {
+    }
+    else {
+      save(plot_abundance, file = filesave)
+    }
     return(plot_abundance)
   }
