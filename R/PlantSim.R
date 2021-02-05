@@ -9,7 +9,6 @@
 #' @param st_portion The portion of the seedlings that stay at the parental plot.
 #' @param surv_rate The survival rate for each plot and each species. It could be universally same.
 #' @param filesave The file name to be saved.
-#' @param st_portion_stochasticity TRUE: add a Poisson sampling to the stay proportion of the seeds. FALSE: no sampling but just the exact proportion of seeds stay.
 #' @return The abundance matrix for all plots and species through time.
 #' @importFrom stats rnorm rpois runif var
 #' @examples
@@ -26,9 +25,7 @@ plantsim <-
            interaction_matrix,
            st_portion,
            surv_rate,
-           filesave = NULL,
-           st_portion_stochasticity = TRUE
-           ) {
+           filesave = NULL) {
     if (is.matrix(ini_abundance) &&
         all(dim(ini_abundance) == c(nplot, nspe))) {
 
@@ -68,39 +65,38 @@ plantsim <-
 
     # Ricker model
     for (ts in c(1:(t - 1))) {
-      # new generated seedlings for each plot and each spe under the local competition
-      new_seedlings <- matrix(0, nrow = nplot, ncol = nspe)
+      # initialize the new seeds gain matrix
+      new_seeds <- matrix(0, nrow = nplot, ncol = nspe)
+      # Producing the seeds for each spec and in each plot
       for (plo in c(1:nplot)) {
         for (spe in c(1:nspe)) {
-          new_seedlings[plo, spe] <-
-            round(plot_abundance[plo, spe, ts] * growth_rate[plo, spe] * exp(1 - plot_abundance[plo, , ts] %*% interaction_matrix[spe, ]))
-          if (is.nan(new_seedlings[plo, spe])) {
+          new_seeds[plo, spe] <-
+            round(
+              plot_abundance[plo, spe, ts] * growth_rate[plo, spe] * exp(1 - plot_abundance[plo, , ts] %*% interaction_matrix[spe,])
+            )
+          if (is.nan(new_seeds[plo, spe])) {
             print("Overflow numbers generated!")
             break
           }
         }
       }
-      # update seedlings after dispersal
-      update_seedlings <- matrix(0, nrow = nplot, ncol = nspe)
-      ## add stochasticity to the stay portion
-      if (st_portion_stochasticity) {
-        stay_seedlings <-  apply(st_portion * new_seedlings, 1:2, rpois, n = 1)
-        dis_seedlings <- new_seedlings - stay_seedlings
-        for (plo in c(1:nplot)) {
-          update_seedlings[plo, ] <-
-            round(stay_seedlings[plo, ] + (colSums(dis_seedlings) - dis_seedlings[plo, ]) / (nplot - 1))
-        }
-      } else {
-        ## no stochasticity to the stay portion
-        for (plo in c(1:nplot)) {
-          update_seedlings[plo, ] <-
-            round(st_portion * new_seedlings[plo,] + (1 - st_portion) * (colSums(new_seedlings) - new_seedlings[plo, ]) / (nplot - 1))
-        }
-      }
-      plot_abundance[, , ts + 1] <- round(surv_rate * update_seedlings)
+      # initialize the update_seeds matrix
+      update_seeds <- matrix(0, nrow = nplot, ncol = nspe)
+
+      # stay seeds and dispersal seeds
+      stay_seeds <-  round(st_portion * new_seeds)
+      dis_seeds <- new_seeds - stay_seeds
+      # the seeds rain for each species by Poisson draws
+      seeds_rain <- rpois(2, colSums(dis_seeds))
+      # seeds rain joins the local seeds
+      update_seeds <-
+        round(stay_seeds + seeds_rain / nplot)
+      # apply survival rate to seeds
+      plot_abundance[, , ts + 1] <- round(surv_rate * update_seeds)
     }
 
     if (is.null(filesave)) {
+
     }
     else {
       save(plot_abundance, file = filesave)

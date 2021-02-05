@@ -13,8 +13,7 @@ plantsim(
   interaction_matrix,
   st_portion,
   surv_rate,
-  filesave = NULL,
-  st_portion_stochasticity = TRUE
+  filesave = NULL
 )
 }
 \arguments{
@@ -35,8 +34,6 @@ plantsim(
 \item{surv_rate}{The survival rate for each plot and each species. It could be universally same.}
 
 \item{filesave}{The file name to be saved.}
-
-\item{st_portion_stochasticity}{TRUE: add a Poisson sampling to the stay proportion of the seeds. FALSE: no sampling but just the exact proportion of seeds stay.}
 }
 \value{
 The abundance matrix for all plots and species through time.
