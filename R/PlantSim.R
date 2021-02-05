@@ -87,7 +87,7 @@ plantsim <-
       stay_seeds <-  round(st_portion * new_seeds)
       dis_seeds <- new_seeds - stay_seeds
       # the seeds rain for each species by Poisson draws
-      seeds_rain <- rpois(2, colSums(dis_seeds))
+      seeds_rain <- rpois(nspe, colSums(dis_seeds))
       # seeds rain joins the local seeds
       update_seeds <-
         round(stay_seeds + seeds_rain / nplot)
