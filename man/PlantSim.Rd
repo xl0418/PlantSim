@@ -13,7 +13,8 @@ plantsim(
   interaction_matrix,
   st_portion,
   surv_rate,
-  filesave = NULL
+  filesave = NULL,
+  vary_k = FALSE
 )
 }
 \arguments{
@@ -34,6 +35,8 @@ plantsim(
 \item{surv_rate}{The survival rate for each plot and each species. It could be universally same.}
 
 \item{filesave}{The file name to be saved.}
+
+\item{vary_k}{Set vary_k be a vector of two entries providing the mean and the sd. Otherwise, it is FALSE giving the same k = 1 to all plots.}
 }
 \value{
 The abundance matrix for all plots and species through time.

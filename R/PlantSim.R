@@ -9,6 +9,7 @@
 #' @param st_portion The portion of the seedlings that stay at the parental plot.
 #' @param surv_rate The survival rate for each plot and each species. It could be universally same.
 #' @param filesave The file name to be saved.
+#' @param vary_k Set vary_k be a vector of two entries providing the mean and the sd. Otherwise, it is FALSE giving the same k = 1 to all plots.
 #' @return The abundance matrix for all plots and species through time.
 #' @importFrom stats rnorm rpois runif var
 #' @examples
@@ -25,7 +26,9 @@ plantsim <-
            interaction_matrix,
            st_portion,
            surv_rate,
-           filesave = NULL) {
+           filesave = NULL,
+           vary_k = FALSE) {
+    # Check if the initial abundance is compatible with the dim (nplot, nspe) or a constant that applies to every plot and species
     if (is.matrix(ini_abundance) &&
         all(dim(ini_abundance) == c(nplot, nspe))) {
 
@@ -35,7 +38,7 @@ plantsim <-
       ))
     }
 
-
+    # Check the growth rate dimension. Either universally same or customized by users
     if (is.null(dim(growth_rate))) {
       growth_rate <- matrix(growth_rate, nrow = nplot, ncol = nspe)
     } else if (any(dim(growth_rate) != c(nplot, nspe))) {
@@ -45,7 +48,7 @@ plantsim <-
         )
       )
     }
-
+    # Check the survival rate dimension.
     if (is.null(dim(surv_rate))) {
       surv_rate <- matrix(surv_rate, nrow = nplot, ncol = nspe)
     } else if (any(dim(surv_rate) != c(nplot, nspe))) {
@@ -55,10 +58,18 @@ plantsim <-
         )
       )
     }
-
+    # Check the dimension of the interaction matrix
     if (dim(interaction_matrix)[1] != nspe) {
       return(print("Wrong dim for the interaction matrix."))
     }
+
+    # Set a variable K for each plot
+    if (is.vector(vary_k)) {
+      k = rnorm(nplot, mean = vary_k[1], sd = vary_k[2])
+    } else {
+      k = rep(1, nplot)
+    }
+
     # initialize the community matrix
     plot_abundance <- array(0, dim = c(nplot, nspe, t))
     plot_abundance[, , 1] <- round(ini_abundance)
@@ -72,7 +83,7 @@ plantsim <-
         for (spe in c(1:nspe)) {
           new_seeds[plo, spe] <-
             round(
-              plot_abundance[plo, spe, ts] * growth_rate[plo, spe] * exp(1 - plot_abundance[plo, , ts] %*% interaction_matrix[spe,])
+              plot_abundance[plo, spe, ts] * growth_rate[plo, spe] * exp(1 - plot_abundance[plo, , ts] %*% interaction_matrix[spe, ] / k[nplot])
             )
           if (is.nan(new_seeds[plo, spe])) {
             print("Overflow numbers generated!")
