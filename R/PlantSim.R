@@ -64,7 +64,7 @@ plantsim <-
     }
 
     # Set a variable K for each plot
-    if (is.vector(vary_k)) {
+    if (is.vector(vary_k) && length(vary_k) == 2) {
       k = rnorm(nplot, mean = vary_k[1], sd = vary_k[2])
     } else {
       k = rep(1, nplot)
