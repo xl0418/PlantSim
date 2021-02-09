@@ -14,7 +14,8 @@ plantsim(
   st_portion,
   surv_rate,
   filesave = NULL,
-  vary_k = FALSE
+  vary_k = FALSE,
+  kill_rate = 0.05
 )
 }
 \arguments{
@@ -37,6 +38,8 @@ plantsim(
 \item{filesave}{The file name to be saved.}
 
 \item{vary_k}{Set vary_k be a vector of two entries providing the mean and the sd. Otherwise, it is FALSE giving the same k = 1 to all plots.}
+
+\item{kill_rate}{Kill all plants in a percentage of plots.}
 }
 \value{
 The abundance matrix for all plots and species through time.

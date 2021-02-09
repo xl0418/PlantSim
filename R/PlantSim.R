@@ -10,6 +10,7 @@
 #' @param surv_rate The survival rate for each plot and each species. It could be universally same.
 #' @param filesave The file name to be saved.
 #' @param vary_k Set vary_k be a vector of two entries providing the mean and the sd. Otherwise, it is FALSE giving the same k = 1 to all plots.
+#' @param kill_rate Kill all plants in a percentage of plots.
 #' @return The abundance matrix for all plots and species through time.
 #' @importFrom stats rnorm rpois runif var
 #' @examples
@@ -27,7 +28,8 @@ plantsim <-
            st_portion,
            surv_rate,
            filesave = NULL,
-           vary_k = FALSE) {
+           vary_k = FALSE,
+           kill_rate = 0.05) {
     # Check if the initial abundance is compatible with the dim (nplot, nspe) or a constant that applies to every plot and species
     if (is.matrix(ini_abundance) &&
         all(dim(ini_abundance) == c(nplot, nspe))) {
@@ -78,7 +80,7 @@ plantsim <-
     for (ts in c(1:(t - 1))) {
       # initialize the new seeds gain matrix
       new_seeds <- matrix(0, nrow = nplot, ncol = nspe)
-      # Producing the seeds for each spec and in each plot
+      # Producing the seeds for each spec and in each plot following the Ricker model
       for (plo in c(1:nplot)) {
         for (spe in c(1:nspe)) {
           new_seeds[plo, spe] <-
@@ -98,12 +100,18 @@ plantsim <-
       stay_seeds <-  round(st_portion * new_seeds)
       dis_seeds <- new_seeds - stay_seeds
       # the seeds rain for each species by Poisson draws
-      seeds_rain <- rpois(nspe, colSums(dis_seeds))
+      seeds_rain <- colSums(dis_seeds)
+      # apply survival rate to the seeds rain
+      actual_seeds_rain <- round(surv_rate * seeds_rain / nplot)
+
+      # kill plants in selected plots
+      kill_plots <- sort(sample(x = c(1:nplot), size = round(kill_rate * nplot)))
+      stay_seeds[kill_plots, ] <- 0
       # seeds rain joins the local seeds
       update_seeds <-
-        round(stay_seeds + seeds_rain / nplot)
+        stay_seeds + rpois(nplot, actual_seeds_rain)
       # apply survival rate to seeds
-      plot_abundance[, , ts + 1] <- round(surv_rate * update_seeds)
+      plot_abundance[, , ts + 1] <- update_seeds
     }
 
     if (is.null(filesave)) {
