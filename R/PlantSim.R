@@ -110,9 +110,15 @@ plantsim <-
       kill_plots <-
         sort(sample(x = c(1:nplot), size = round(kill_rate * nplot)))
       stay_seeds[kill_plots,] <- 0
+      # dispersal seeds
+      dispersal_seeds <- NULL
+      for (spe_ind in c(1:nspe)) {
+        dispersal_seeds <- cbind(dispersal_seeds, rpois(nplot, actual_seeds_rain[spe_ind]))
+      }
+
       # seeds rain joins the local seeds
       update_seeds <-
-        stay_seeds + rpois(nplot, actual_seeds_rain)
+        stay_seeds + dispersal_seeds
       # apply survival rate to seeds
       plot_abundance[, , ts + 1] <- update_seeds
     }
