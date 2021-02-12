@@ -66,8 +66,8 @@ plantsim <-
     }
 
     # Set a variable K for each plot
-    if (is.integer((vary_k))) {
-      k = rpois(nplot, mean = vary_k)
+    if (length(vary_k) == 2) {
+      k = round(rnorm(nplot, mean = vary_k[1], sd = vary_k[2]))
     } else {
       k = rep(1, nplot)
     }
@@ -81,12 +81,14 @@ plantsim <-
       # initialize the new seeds gain matrix
       new_seeds <- matrix(0, nrow = nplot, ncol = nspe)
       # Producing the seeds for each spec and in each plot following the Ricker model
+      # and use Poisson draw to calculate out how many seed are produced.
       for (plo in c(1:nplot)) {
         for (spe in c(1:nspe)) {
-          new_seeds[plo, spe] <-
+          temp_seeds <-
             round(
-              plot_abundance[plo, spe, ts] * growth_rate[plo, spe] * exp(1 - plot_abundance[plo, , ts] %*% interaction_matrix[spe, ] / k[nplot])
+              plot_abundance[plo, spe, ts] * growth_rate[plo, spe] * exp(1 - plot_abundance[plo, , ts] %*% interaction_matrix[spe,] / k[nplot])
             )
+          new_seeds[plo, spe] <- rpois(1, temp_seeds)
           if (is.nan(new_seeds[plo, spe])) {
             print("Overflow numbers generated!")
             break
@@ -105,8 +107,9 @@ plantsim <-
       actual_seeds_rain <- round(surv_rate * seeds_rain / nplot)
 
       # kill plants in selected plots
-      kill_plots <- sort(sample(x = c(1:nplot), size = round(kill_rate * nplot)))
-      stay_seeds[kill_plots, ] <- 0
+      kill_plots <-
+        sort(sample(x = c(1:nplot), size = round(kill_rate * nplot)))
+      stay_seeds[kill_plots,] <- 0
       # seeds rain joins the local seeds
       update_seeds <-
         stay_seeds + rpois(nplot, actual_seeds_rain)
