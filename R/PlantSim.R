@@ -88,7 +88,7 @@ plantsim <-
             round(
               plot_abundance[plo, spe, ts] * growth_rate[plo, spe] * exp(1 - plot_abundance[plo, , ts] %*% interaction_matrix[spe,] / k[nplot])
             )
-          new_seeds[plo, spe] <- rpois(1, temp_seeds)
+          new_seeds[plo, spe] <- temp_seeds
           if (is.nan(new_seeds[plo, spe])) {
             print("Overflow numbers generated!")
             break
@@ -99,8 +99,11 @@ plantsim <-
       update_seeds <- matrix(0, nrow = nplot, ncol = nspe)
 
       # stay seeds and dispersal seeds
-      stay_seeds <-  round(st_portion * new_seeds)
-      dis_seeds <- new_seeds - stay_seeds
+      stay_seeds <-  rpois(length(new_seeds), round(st_portion * new_seeds))
+      dim(stay_seeds) <- dim(new_seeds)
+
+      dis_seeds <- pmax(new_seeds - stay_seeds, 0)
+
       # the seeds rain for each species by Poisson draws
       seeds_rain <- colSums(dis_seeds)
       # apply survival rate to the seeds rain
