@@ -74,6 +74,8 @@ plantsim <-
 
     # initialize the community matrix
     plot_abundance <- array(0, dim = c(nplot, nspe, t))
+    stay_seeds <- array(0, dim = c(nplot, nspe, t))
+    dispersal_seeds <- array(0, dim = c(nplot, nspe, t))
     plot_abundance[, , 1] <- round(ini_abundance)
 
     # Ricker model
@@ -97,29 +99,31 @@ plantsim <-
       update_seeds <- matrix(0, nrow = nplot, ncol = nspe)
 
       # stay seeds and dispersal seeds
-      stay_seeds <-  rpois(length(new_seeds), st_portion * new_seeds)
-      dim(stay_seeds) <- dim(new_seeds)
+      stay_seeds[,,ts] <-  rpois(length(new_seeds), st_portion * new_seeds)
 
-      dis_seeds <- pmax(new_seeds - stay_seeds, 0)
+      dis_seeds <- pmax(new_seeds - stay_seeds[,,ts], 0)
 
       # the seeds rain for each species by Poisson draws
       seeds_rain <- colSums(dis_seeds)
+
       # apply survival rate to the seeds rain
-      actual_seeds_rain <- surv_rate * seeds_rain / nplot
+      actual_seeds_rain <- matrix(0, nrow = nplot, ncol = nspe)
+      for (col_ind in c(1:nspe)) {
+        actual_seeds_rain[ , col_ind] <- surv_rate[, col_ind] * seeds_rain[col_ind] / nplot
+      }
 
       # kill plants in selected plots
       kill_plots <-
         sort(sample(x = c(1:nplot), size = round(kill_rate * nplot)))
-      stay_seeds[kill_plots,] <- 0
+      stay_seeds[kill_plots,,ts] <- 0
       # dispersal seeds
-      dispersal_seeds <- NULL
       for (spe_ind in c(1:nspe)) {
-        dispersal_seeds <- cbind(dispersal_seeds, rpois(nplot, actual_seeds_rain[spe_ind]))
+        dispersal_seeds[, spe_ind, ts] <- rpois(nplot, actual_seeds_rain[spe_ind])
       }
 
       # seeds rain joins the local seeds
       update_seeds <-
-        stay_seeds + dispersal_seeds
+        stay_seeds[,,ts] + dispersal_seeds[,,ts]
       # apply survival rate to seeds
       plot_abundance[, , ts + 1] <- update_seeds
     }
@@ -130,5 +134,7 @@ plantsim <-
     else {
       save(plot_abundance, file = filesave)
     }
-    return(plot_abundance)
+    return(list(all = plot_abundance,
+                stay = stay_seeds,
+                dispersal = dispersal_seeds))
   }
