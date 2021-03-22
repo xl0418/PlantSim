@@ -73,14 +73,14 @@ plantsim <-
     }
 
     # initialize the community matrix
-    plot_abundance <- array(0, dim = c(nplot, nspe, t))
+    plot_abundance <- array(0, dim = c(nplot, nspe, t+1))
     stay_seeds <- array(0, dim = c(nplot, nspe, t))
     dispersal_seeds <- array(0, dim = c(nplot, nspe, t))
     seeds_before_disp <- array(0, dim = c(nplot, nspe, t))
     plot_abundance[, , 1] <- round(ini_abundance)
 
     # Ricker model
-    for (ts in c(1:(t - 1))) {
+    for (ts in c(1:t )) {
       # initialize the new seeds gain matrix
       new_seeds <- matrix(0, nrow = nplot, ncol = nspe)
       # Producing the seeds for each spec and in each plot following the Ricker model
@@ -137,7 +137,7 @@ plantsim <-
     else {
       save(plot_abundance, file = filesave)
     }
-    return(list(all = plot_abundance,
+    return(list(all = plot_abundance[,,1:t],
                 stay = stay_seeds,
                 dispersal = dispersal_seeds,
                 bef_dispersal = seeds_before_disp))
