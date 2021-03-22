@@ -137,7 +137,7 @@ plantsim <-
     else {
       save(plot_abundance, file = filesave)
     }
-    return(list(all = plot_abundance[,,1:t],
+    return(list(all = plot_abundance[,,1:t, drop = FALSE],
                 stay = stay_seeds,
                 dispersal = dispersal_seeds,
                 bef_dispersal = seeds_before_disp))
