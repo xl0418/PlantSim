@@ -76,6 +76,7 @@ plantsim <-
     plot_abundance <- array(0, dim = c(nplot, nspe, t))
     stay_seeds <- array(0, dim = c(nplot, nspe, t))
     dispersal_seeds <- array(0, dim = c(nplot, nspe, t))
+    seeds_before_disp <- array(0, dim = c(nplot, nspe, t))
     plot_abundance[, , 1] <- round(ini_abundance)
 
     # Ricker model
@@ -95,6 +96,8 @@ plantsim <-
           }
         }
       }
+
+      seeds_before_disp[,,ts] <- new_seeds
       # initialize the update_seeds matrix
       update_seeds <- matrix(0, nrow = nplot, ncol = nspe)
 
@@ -136,5 +139,6 @@ plantsim <-
     }
     return(list(all = plot_abundance,
                 stay = stay_seeds,
-                dispersal = dispersal_seeds))
+                dispersal = dispersal_seeds,
+                bef_dispersal = seeds_before_disp))
   }
