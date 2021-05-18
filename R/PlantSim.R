@@ -104,7 +104,7 @@ plantsim <-
       # stay seeds and dispersal seeds
       stay_seeds[,,ts] <-  rpois(length(new_seeds), st_portion * new_seeds)
 
-      dis_seeds <- pmax(new_seeds - stay_seeds[,,ts], 0)
+      dis_seeds <- (st_portion != 1) * pmax(new_seeds - stay_seeds[,,ts], 0)
 
       # the seeds rain for each species by Poisson draws
       seeds_rain <- colSums(dis_seeds)
