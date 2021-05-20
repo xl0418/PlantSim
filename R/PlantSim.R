@@ -73,22 +73,22 @@ plantsim <-
     }
 
     # initialize the community matrix
-    plot_abundance <- array(0, dim = c(nplot, nspe, t+1))
+    plot_abundance <- array(0, dim = c(nplot, nspe, t + 1))
     stay_seeds <- array(0, dim = c(nplot, nspe, t))
     dispersal_seeds <- array(0, dim = c(nplot, nspe, t))
     seeds_before_disp <- array(0, dim = c(nplot, nspe, t))
     plot_abundance[, , 1] <- round(ini_abundance)
 
     # Ricker model
-    for (ts in c(1:t )) {
+    for (ts in c(1:t)) {
       # initialize the new seeds gain matrix
       new_seeds <- matrix(0, nrow = nplot, ncol = nspe)
       # Producing the seeds for each spec and in each plot following the Ricker model
-      # and use Poisson draw to calculate out how many seed are produced.
+      # and use Poisson draw to calculate out how many seeds stay.
       for (plo in c(1:nplot)) {
         for (spe in c(1:nspe)) {
           temp_seeds <-
-              plot_abundance[plo, spe, ts] * growth_rate[plo, spe] * exp(1 - plot_abundance[plo, , ts] %*% interaction_matrix[spe,] / k[nplot])
+            plot_abundance[plo, spe, ts] * growth_rate[plo, spe] * exp(1 - plot_abundance[plo, , ts] %*% interaction_matrix[spe, ] / k[nplot])
           new_seeds[plo, spe] <- temp_seeds
           if (is.nan(new_seeds[plo, spe])) {
             print("Overflow numbers generated!")
@@ -97,14 +97,16 @@ plantsim <-
         }
       }
 
-      seeds_before_disp[,,ts] <- new_seeds
+      seeds_before_disp[, , ts] <- new_seeds
       # initialize the update_seeds matrix
       update_seeds <- matrix(0, nrow = nplot, ncol = nspe)
 
       # stay seeds and dispersal seeds
-      stay_seeds[,,ts] <-  rpois(length(new_seeds), st_portion * new_seeds)
+      stay_seeds[, , ts] <-
+        rpois(length(new_seeds), st_portion * new_seeds)
 
-      dis_seeds <- (st_portion != 1) * pmax(new_seeds - stay_seeds[,,ts], 0)
+      dis_seeds <-
+        (st_portion != 1) * pmax(new_seeds - stay_seeds[, , ts], 0)
 
       # the seeds rain for each species by Poisson draws
       seeds_rain <- colSums(dis_seeds)
@@ -112,21 +114,23 @@ plantsim <-
       # apply survival rate to the seeds rain
       actual_seeds_rain <- matrix(0, nrow = nplot, ncol = nspe)
       for (col_ind in c(1:nspe)) {
-        actual_seeds_rain[ , col_ind] <- surv_rate[, col_ind] * seeds_rain[col_ind] / nplot
+        actual_seeds_rain[, col_ind] <-
+          surv_rate[, col_ind] * seeds_rain[col_ind] / nplot
       }
 
       # kill plants in selected plots
       kill_plots <-
         sort(sample(x = c(1:nplot), size = round(kill_rate * nplot)))
-      stay_seeds[kill_plots,,ts] <- 0
+      stay_seeds[kill_plots, , ts] <- 0
       # dispersal seeds
       for (spe_ind in c(1:nspe)) {
-        dispersal_seeds[, spe_ind, ts] <- rpois(nplot, actual_seeds_rain[spe_ind])
+        dispersal_seeds[, spe_ind, ts] <-
+          rpois(nplot, actual_seeds_rain[spe_ind])
       }
 
       # seeds rain joins the local seeds
       update_seeds <-
-        stay_seeds[,,ts] + dispersal_seeds[,,ts]
+        stay_seeds[, , ts] + dispersal_seeds[, , ts]
       # apply survival rate to seeds
       plot_abundance[, , ts + 1] <- update_seeds
     }
@@ -137,8 +141,12 @@ plantsim <-
     else {
       save(plot_abundance, file = filesave)
     }
-    return(list(all = plot_abundance[,,1:t, drop = FALSE],
-                stay = stay_seeds,
-                dispersal = dispersal_seeds,
-                bef_dispersal = seeds_before_disp))
+    return(
+      list(
+        all = plot_abundance[, , 1:t, drop = FALSE],
+        stay = stay_seeds,
+        dispersal = dispersal_seeds,
+        bef_dispersal = seeds_before_disp
+      )
+    )
   }
