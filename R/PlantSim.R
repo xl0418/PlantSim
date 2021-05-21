@@ -113,21 +113,27 @@ plantsim <-
       # the seeds rain for each species by Poisson draws
       seeds_rain <- colSums(dis_seeds[, , ts])
 
-      # apply survival rate to the seeds rain
-      actual_seeds_rain <- matrix(0, nrow = nplot, ncol = nspe)
-      for (col_ind in c(1:nspe)) {
-        actual_seeds_rain[, col_ind] <-
-          surv_rate[, col_ind] * seeds_rain[col_ind] / nplot
-      }
+      # # apply survival rate to the seeds rain
+      # actual_seeds_rain <- matrix(0, nrow = nplot, ncol = nspe)
+      # for (col_ind in c(1:nspe)) {
+      #   actual_seeds_rain[, col_ind] <-
+      #     surv_rate[, col_ind] * seeds_rain[col_ind] / nplot
+      # }
+      #
+      # # kill plants in selected plots
+      # kill_plots <-
+      #   sample(x = c(1:nplot), size = round(kill_rate * nplot))
+      # stay_seeds[kill_plots, , ts] <- 0
+      # # dispersal seeds
+      # for (spe_ind in c(1:nspe)) {
+      #   dispersal_seeds[, spe_ind, ts] <-
+      #     rpois(nplot, actual_seeds_rain[spe_ind])
+      # }
 
-      # kill plants in selected plots
-      kill_plots <-
-        sample(x = c(1:nplot), size = round(kill_rate * nplot))
-      stay_seeds[kill_plots, , ts] <- 0
       # dispersal seeds
       for (spe_ind in c(1:nspe)) {
         dispersal_seeds[, spe_ind, ts] <-
-          rpois(nplot, actual_seeds_rain[spe_ind])
+          stats::rmultinom(1,seeds_rain[spe],prob = rep(1/nplot,nplot))
       }
 
       # seeds rain joins the local seeds
