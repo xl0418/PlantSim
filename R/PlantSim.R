@@ -75,6 +75,8 @@ plantsim <-
     # initialize the community matrix
     plot_abundance <- array(0, dim = c(nplot, nspe, t + 1))
     stay_seeds <- array(0, dim = c(nplot, nspe, t))
+    dis_seeds <- array(0, dim = c(nplot, nspe, t))
+
     dispersal_seeds <- array(0, dim = c(nplot, nspe, t))
     seeds_before_disp <- array(0, dim = c(nplot, nspe, t))
     plot_abundance[, , 1] <- round(ini_abundance)
@@ -105,11 +107,11 @@ plantsim <-
       stay_seeds[, , ts] <-
         rpois(length(new_seeds), st_portion * new_seeds)
 
-      dis_seeds <-
-        (st_portion != 1) * pmax(new_seeds - stay_seeds[, , ts], 0)
+      dis_seeds[, , ts] <-
+        rpois(length(new_seeds), (1 - st_portion) * new_seeds)
 
       # the seeds rain for each species by Poisson draws
-      seeds_rain <- colSums(dis_seeds)
+      seeds_rain <- colSums(dis_seeds[, , ts])
 
       # apply survival rate to the seeds rain
       actual_seeds_rain <- matrix(0, nrow = nplot, ncol = nspe)
@@ -120,7 +122,7 @@ plantsim <-
 
       # kill plants in selected plots
       kill_plots <-
-        sort(sample(x = c(1:nplot), size = round(kill_rate * nplot)))
+        sample(x = c(1:nplot), size = round(kill_rate * nplot))
       stay_seeds[kill_plots, , ts] <- 0
       # dispersal seeds
       for (spe_ind in c(1:nspe)) {
