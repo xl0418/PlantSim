@@ -12,10 +12,8 @@ plantsim(
   growth_rate,
   interaction_matrix,
   st_portion,
-  surv_rate,
   filesave = NULL,
-  vary_k = FALSE,
-  kill_rate = 0.05
+  vary_k = FALSE
 )
 }
 \arguments{
@@ -33,13 +31,9 @@ plantsim(
 
 \item{st_portion}{The portion of the seedlings that stay at the parental plot.}
 
-\item{surv_rate}{The survival rate for each plot and each species. It could be universally same.}
-
 \item{filesave}{The file name to be saved.}
 
 \item{vary_k}{Set vary_k be a vector of two entries providing the mean and the sd. Otherwise, it is FALSE giving the same k = 1 to all plots.}
-
-\item{kill_rate}{Kill all plants in a percentage of plots.}
 }
 \value{
 The abundance matrix for all plots and species through time.
@@ -49,5 +43,5 @@ Simulate a plant community
 }
 \examples{
 plantsim(nplot = 5, nspe = 2, t = 10, ini_abundance = matrix(1:10, 5, 2),
- growth_rate = 1, interaction_matrix = matrix(0.001, 2, 2), st_portion = 0.7, surv_rate = 1)
+ growth_rate = 1, interaction_matrix = matrix(0.001, 2, 2), st_portion = 0.7)
 }

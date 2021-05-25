@@ -1,7 +1,7 @@
 Package: PlantSim
 Type: Package
 Title: Simulating a plant community and estimating the interaction matrix
-Version: 0.1.0
+Version: 0.1.1
 Author: Liang Xu
 Maintainer: Liang Xu <xl0418@gmail.com>
 Description: One can simulate a plant commnity by indicating the number of the plots and the species.

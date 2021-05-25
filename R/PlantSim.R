@@ -7,15 +7,13 @@
 #' @param growth_rate The growth rate for each plot and each species. It could be universally same.
 #' @param interaction_matrix The interaction matrix among species
 #' @param st_portion The portion of the seedlings that stay at the parental plot.
-#' @param surv_rate The survival rate for each plot and each species. It could be universally same.
 #' @param filesave The file name to be saved.
 #' @param vary_k Set vary_k be a vector of two entries providing the mean and the sd. Otherwise, it is FALSE giving the same k = 1 to all plots.
-#' @param kill_rate Kill all plants in a percentage of plots.
 #' @return The abundance matrix for all plots and species through time.
 #' @importFrom stats rnorm rpois runif var
 #' @examples
 #' plantsim(nplot = 5, nspe = 2, t = 10, ini_abundance = matrix(1:10, 5, 2),
-#'  growth_rate = 1, interaction_matrix = matrix(0.001, 2, 2), st_portion = 0.7, surv_rate = 1)
+#'  growth_rate = 1, interaction_matrix = matrix(0.001, 2, 2), st_portion = 0.7)
 #' @export
 #'
 plantsim <-
@@ -26,10 +24,8 @@ plantsim <-
            growth_rate,
            interaction_matrix,
            st_portion,
-           surv_rate,
            filesave = NULL,
-           vary_k = FALSE,
-           kill_rate = 0.05) {
+           vary_k = FALSE) {
     # Check if the initial abundance is compatible with the dim (nplot, nspe) or a constant that applies to every plot and species
     if (is.matrix(ini_abundance) &&
         all(dim(ini_abundance) == c(nplot, nspe))) {
@@ -51,15 +47,15 @@ plantsim <-
       )
     }
     # Check the survival rate dimension.
-    if (is.null(dim(surv_rate))) {
-      surv_rate <- matrix(surv_rate, nrow = nplot, ncol = nspe)
-    } else if (any(dim(surv_rate) != c(nplot, nspe))) {
-      return (
-        print(
-          "The dim of the survival rate is not equal to the dim of the number of plots X the number of species."
-        )
-      )
-    }
+    # if (is.null(dim(surv_rate))) {
+    #   surv_rate <- matrix(surv_rate, nrow = nplot, ncol = nspe)
+    # } else if (any(dim(surv_rate) != c(nplot, nspe))) {
+    #   return (
+    #     print(
+    #       "The dim of the survival rate is not equal to the dim of the number of plots X the number of species."
+    #     )
+    #   )
+    # }
     # Check the dimension of the interaction matrix
     if (dim(interaction_matrix)[1] != nspe) {
       return(print("Wrong dim for the interaction matrix."))
