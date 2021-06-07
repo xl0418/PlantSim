@@ -107,7 +107,7 @@ plantsim <-
         rpois(length(new_seeds), (1 - st_portion) * new_seeds)
 
       # the seeds rain for each species by Poisson draws
-      seeds_rain <- colSums(dis_seeds[, , ts])
+      seeds_rain <- colSums(dis_seeds[, , ts, drop = FALSE])
 
       # # apply survival rate to the seeds rain
       # actual_seeds_rain <- matrix(0, nrow = nplot, ncol = nspe)
