@@ -86,7 +86,7 @@ plantsim <-
       for (plo in c(1:nplot)) {
         for (spe in c(1:nspe)) {
           temp_seeds <-
-            plot_abundance[plo, spe, ts] * growth_rate[plo, spe] * exp(1 - plot_abundance[plo, , ts] %*% interaction_matrix[spe, ] / k[nplot])
+            plot_abundance[plo, spe, ts] * growth_rate[plo, spe] * exp(1 - plot_abundance[plo, , ts] %*% interaction_matrix[, spe] / k[nplot])
           new_seeds[plo, spe] <- temp_seeds
           if (is.nan(new_seeds[plo, spe])) {
             print("Overflow numbers generated!")
