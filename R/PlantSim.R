@@ -95,7 +95,6 @@ plantsim <-
         }
       }
 
-      seeds_before_disp[, , ts] <- new_seeds
       # initialize the update_seeds matrix
       update_seeds <- matrix(0, nrow = nplot, ncol = nspe)
 
@@ -103,8 +102,11 @@ plantsim <-
       stay_seeds[, , ts] <-
         rpois(length(new_seeds), st_portion * new_seeds)
 
+
       dis_seeds[, , ts] <-
         rpois(length(new_seeds), (1 - st_portion) * new_seeds)
+
+      seeds_before_disp[, , ts] <- stay_seeds[, , ts] + dis_seeds[, , ts]
 
       # the seeds rain for each species by Poisson draws
       seeds_rain <- colSums(dis_seeds[, , ts, drop = FALSE])
