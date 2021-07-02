@@ -9,6 +9,7 @@
 #' @param st_portion The portion of the seedlings that stay at the parental plot.
 #' @param filesave The file name to be saved.
 #' @param vary_k Set vary_k be a vector of two entries providing the mean and the sd. Otherwise, it is FALSE giving the same k = 1 to all plots.
+#' @param distribution Distribution mode.
 #' @return The abundance matrix for all plots and species through time.
 #' @importFrom stats rnorm rpois runif var
 #' @examples
@@ -25,7 +26,8 @@ plantsim <-
            interaction_matrix,
            st_portion,
            filesave = NULL,
-           vary_k = FALSE) {
+           vary_k = FALSE,
+           distribution = "uniform") {
     # Check if the initial abundance is compatible with the dim (nplot, nspe) or a constant that applies to every plot and species
     if (is.matrix(ini_abundance) &&
         all(dim(ini_abundance) == c(nplot, nspe))) {
@@ -129,9 +131,15 @@ plantsim <-
       # }
 
       # dispersal seeds
+      if(distribution == "uniform") {
+        prob_dis = rep(1/nplot,nplot)
+      }else if(distribution == "random"){
+        probs <- runif(nplot, 0, 1)
+        prob_dis = probs/sum(probs)
+      }
       for (spe_ind in c(1:nspe)) {
         dispersal_seeds[, spe_ind, ts] <-
-          stats::rmultinom(1,seeds_rain[spe],prob = rep(1/nplot,nplot))
+          stats::rmultinom(1,seeds_rain[spe],prob = prob_dis)
       }
 
       # seeds rain joins the local seeds
