@@ -136,6 +136,8 @@ plantsim <-
       }else if(distribution == "random"){
         probs <- runif(nplot, 0, 1)
         prob_dis = probs/sum(probs)
+      }else{
+        return(print("Pls specify the distribution mode, i.e. random or uniform."))
       }
       for (spe_ind in c(1:nspe)) {
         dispersal_seeds[, spe_ind, ts] <-
