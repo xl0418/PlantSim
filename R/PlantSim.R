@@ -141,7 +141,7 @@ plantsim <-
       }
       for (spe_ind in c(1:nspe)) {
         dispersal_seeds[, spe_ind, ts] <-
-          stats::rmultinom(1,seeds_rain[spe],prob = prob_dis)
+          stats::rmultinom(1,seeds_rain[spe_ind],prob = prob_dis)
       }
 
       # seeds rain joins the local seeds
