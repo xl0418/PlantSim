@@ -108,7 +108,8 @@ plantsim <-
       dis_seeds[, , ts] <-
         rpois(length(new_seeds), (1 - st_portion) * new_seeds)
 
-      seeds_before_disp[, , ts] <- stay_seeds[, , ts] + dis_seeds[, , ts]
+      seeds_before_disp[, , ts] <-
+        stay_seeds[, , ts] + dis_seeds[, , ts]
 
       # the seeds rain for each species by Poisson draws
       seeds_rain <- colSums(dis_seeds[, , ts, drop = FALSE])
@@ -131,17 +132,22 @@ plantsim <-
       # }
 
       # dispersal seeds
-      if(distribution == "uniform") {
-        prob_dis = rep(1/nplot,nplot)
-      }else if(distribution == "random"){
+      if (distribution == "uniform") {
+        prob_dis = rep(1 / nplot, nplot)
+      } else if (distribution == "random") {
         probs <- runif(nplot, 0, 1)
-        prob_dis = probs/sum(probs)
-      }else{
+        prob_dis = probs / sum(probs)
+      } else{
         return(print("Pls specify the distribution mode, i.e. random or uniform."))
       }
       for (spe_ind in c(1:nspe)) {
         dispersal_seeds[, spe_ind, ts] <-
-          stats::rmultinom(1,seeds_rain[spe_ind],prob = prob_dis)
+          if (seeds_rain[spe_ind] < .Machine$integer.max) {
+            stats::rmultinom(1, seeds_rain[spe_ind], prob = prob_dis)
+          }
+          else {
+            rep(seeds_rain[spe_ind] / nplot, nplot) # large integer check
+          }
       }
 
       # seeds rain joins the local seeds
