@@ -14,7 +14,10 @@ plantsim(
   st_portion,
   filesave = NULL,
   vary_k = FALSE,
-  distribution = "uniform"
+  distribution = "uniform",
+  model = "Ricker",
+  sig_disp = 1,
+  boundary = FALSE
 )
 }
 \arguments{
@@ -36,7 +39,13 @@ plantsim(
 
 \item{vary_k}{Set vary_k be a vector of two entries providing the mean and the sd. Otherwise, it is FALSE giving the same k = 1 to all plots.}
 
-\item{distribution}{Distribution mode.}
+\item{distribution}{Distribution mode. "uniform" stands for the uniform dispersal; "random" stands for the random dispersal; "Gaussian" stands for the Gaussian dispersal.}
+
+\item{model}{Specify local population models, i.e. Ricker, BH, PL, for the Ricker model, the Beverton-Holt model and the power law model.}
+
+\item{sig_disp}{The variance of the dispersal for the Gaussian dispersal kernel.}
+
+\item{boundary}{If TRUE, the boundary effect is considered. Otherwise, the grid is a torus.}
 }
 \value{
 The abundance matrix for all plots and species through time.
