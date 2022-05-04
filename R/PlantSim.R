@@ -66,16 +66,7 @@ plantsim <-
         )
       )
     }
-    # Check the survival rate dimension.
-    # if (is.null(dim(surv_rate))) {
-    #   surv_rate <- matrix(surv_rate, nrow = nplot, ncol = nspe)
-    # } else if (any(dim(surv_rate) != c(nplot, nspe))) {
-    #   return (
-    #     print(
-    #       "The dim of the survival rate is not equal to the dim of the number of plots X the number of species."
-    #     )
-    #   )
-    # }
+
     # Check the dimension of the interaction matrix
     if (dim(interaction_matrix)[1] != nspe) {
       return(print("Wrong dim for the interaction matrix."))
@@ -94,9 +85,9 @@ plantsim <-
     dis_seeds <- array(0, dim = c(nplot, nspe, t))
 
     dispersal_seeds <- array(0, dim = c(nplot, nspe, t))
-    seeds_before_disp <- array(0, dim = c(nplot, nspe, t))
+    seeds_before_disp <- array(0, dim = c(nplot, nspe, t + 1))
     plot_abundance[, , 1] <- round(ini_abundance)
-
+    seeds_before_disp[, , 1] <- round(ini_abundance)
     if (distribution == "Gaussian") {
       x <- sqrt(nplot)
       y <- sqrt(nplot)
@@ -114,12 +105,10 @@ plantsim <-
         dmat <- sqrt(outer(xy[,1], xy[,1], "-")^2+outer(xy[,2], xy[,2], "-")^2)
 
         Dmat <- exp(-(dmat/sig_disp)^2) #gaussian seed dispersal kernel with variance sig_disp
-        #I think the normalization for 'reflecting' boundaries would be something like:
         Dmat <- sweep(Dmat, 1, apply(Dmat, 2, sum), "/")
       } else {
         dmat <- as.matrix(som.nn::dist.torus(xy))
         Dmat <- exp(-(dmat/sig_disp)^2)
-        #This next normalization for absorbing boundaries assumes negligible boundary-effects in some core population
         Dmat <- sweep(Dmat, 1, apply(Dmat, 2, sum), "/")
       }
 
@@ -137,13 +126,13 @@ plantsim <-
         for (spe in c(1:nspe)) {
           if (model == "Ricker"){
             temp_seeds <-
-              plot_abundance[plo, spe, ts] * growth_rate[plo, spe] * exp(1 - plot_abundance[plo, , ts] %*% interaction_matrix[, spe] / k[nplot])
+              plot_abundance[plo, spe, ts] * exp(growth_rate[plo, spe] - plot_abundance[plo, , ts] %*% interaction_matrix[spe, ] / k[nplot])
           } else if (model == "PL") {
             temp_seeds <-
                growth_rate[plo, spe] * plot_abundance[plo, spe, ts] ** interaction_matrix[1, 1]
           } else if (model == "BH") {
             temp_seeds <-
-              plot_abundance[plo, spe, ts] * growth_rate[plo, spe] / (1 + plot_abundance[plo, , ts] %*% interaction_matrix[, spe] / k[nplot])
+              plot_abundance[plo, spe, ts] * growth_rate[plo, spe] / (1 + plot_abundance[plo, , ts] %*% interaction_matrix[spe, ] / k[nplot])
           } else {
             return(print("Pls specify a local population model..."))
           }
@@ -183,23 +172,6 @@ plantsim <-
         # the seeds rain for each species by Poisson draws
         seeds_rain <- colSums(dis_seeds[, , ts, drop = FALSE])
 
-        # # apply survival rate to the seeds rain
-        # actual_seeds_rain <- matrix(0, nrow = nplot, ncol = nspe)
-        # for (col_ind in c(1:nspe)) {
-        #   actual_seeds_rain[, col_ind] <-
-        #     surv_rate[, col_ind] * seeds_rain[col_ind] / nplot
-        # }
-        #
-        # # kill plants in selected plots
-        # kill_plots <-
-        #   sample(x = c(1:nplot), size = round(kill_rate * nplot))
-        # stay_seeds[kill_plots, , ts] <- 0
-        # # dispersal seeds
-        # for (spe_ind in c(1:nspe)) {
-        #   dispersal_seeds[, spe_ind, ts] <-
-        #     rpois(nplot, actual_seeds_rain[spe_ind])
-        # }
-
         # dispersal seeds
         if (distribution == "uniform") {
           prob_dis = rep(1 / nplot, nplot)
@@ -237,7 +209,7 @@ plantsim <-
         all = plot_abundance[, , 1:t, drop = FALSE],
         stay = stay_seeds,
         dispersal = dispersal_seeds,
-        bef_dispersal = seeds_before_disp,
+        bef_dispersal = seeds_before_disp[, , 1:t, drop = FALSE],
         st_rate = ifelse(distribution == "Gaussian", st_portion_gaussian, st_portion)
       )
     )
