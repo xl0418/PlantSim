@@ -13,6 +13,7 @@
 #' @param sig_disp The variance of the dispersal for the Gaussian dispersal kernel.
 #' @param model Specify local population models, i.e. Ricker, BH, PL, for the Ricker model, the Beverton-Holt model and the power law model.
 #' @param boundary If TRUE, the boundary effect is considered. Otherwise, the grid is a torus.
+#' @param cell_kill_rate The percentage of cells eliminates plant individuals.
 #' @return The abundance matrix for all plots and species through time.
 #' @importFrom stats rnorm rpois runif var
 #' @examples
@@ -33,7 +34,8 @@ plantsim <-
            distribution = "uniform",
            model = "Ricker",
            sig_disp = 1,
-           boundary = FALSE) {
+           boundary = FALSE,
+           cell_kill_rate = 0) {
     # Check if the initial abundance is compatible with the dim (nplot, nspe) or a constant that applies to every plot and species
     if (is.matrix(ini_abundance) &&
         all(dim(ini_abundance) == c(nplot, nspe))) {
@@ -79,6 +81,10 @@ plantsim <-
       k = rep(1, nplot)
     }
 
+    # sample the cells that will eliminate individuals
+    num_cells_kill <- ceiling(nplot * cell_kill_rate)
+    sample_cells <- sample(c(1:nplot), size = num_cells_kill)
+
     # initialize the community matrix
     plot_abundance <- array(0, dim = c(nplot, nspe, t + 1))
     stay_seeds <- array(0, dim = c(nplot, nspe, t))
@@ -117,7 +123,7 @@ plantsim <-
     }
 
     # Ricker model
-    for (ts in c(1:t)) {
+    for (tt in c(1:t)) {
       # initialize the new seeds gain matrix
       new_seeds <- matrix(0, nrow = nplot, ncol = nspe)
       # Producing the seeds for each spec and in each plot following the Ricker model
@@ -126,13 +132,13 @@ plantsim <-
         for (spe in c(1:nspe)) {
           if (model == "Ricker"){
             temp_seeds <-
-              plot_abundance[plo, spe, ts] * exp(growth_rate[plo, spe] - plot_abundance[plo, , ts] %*% interaction_matrix[spe, ] / k[nplot])
+              plot_abundance[plo, spe, tt] * exp(growth_rate[plo, spe] - plot_abundance[plo, , tt] %*% interaction_matrix[spe, ] / k[nplot])
           } else if (model == "PL") {
             temp_seeds <-
-               growth_rate[plo, spe] * plot_abundance[plo, spe, ts] ** interaction_matrix[1, 1]
+               growth_rate[plo, spe] * plot_abundance[plo, spe, tt] ** interaction_matrix[1, 1]
           } else if (model == "BH") {
             temp_seeds <-
-              plot_abundance[plo, spe, ts] * growth_rate[plo, spe] / (1 + plot_abundance[plo, , ts] %*% interaction_matrix[spe, ] / k[nplot])
+              plot_abundance[plo, spe, tt] * growth_rate[plo, spe] / (1 + plot_abundance[plo, , tt] %*% interaction_matrix[spe, ] / k[nplot])
           } else {
             return(print("Pls specify a local population model..."))
           }
@@ -149,28 +155,28 @@ plantsim <-
       if (distribution == "Gaussian") {
         for (spe.id in c(1:nspe)) {
           total_pop <-as.vector(new_seeds[, spe.id] %*% Dmat)
-          stay_seeds[, spe.id, ts] <- rpois(nplot, new_seeds[, spe.id] * st_portion_gaussian)
-          dispersal_seeds[, spe.id, ts] <- rpois(nplot, pmax(total_pop - stay_seeds[, spe.id, ts], 0))
-          seeds_before_disp[, spe.id, ts] <- new_seeds[, spe.id]
-          plot_abundance[, spe.id, ts + 1] <- stay_seeds[, spe.id, ts] + dispersal_seeds[, spe.id, ts]
+          stay_seeds[, spe.id, tt] <- rpois(nplot, new_seeds[, spe.id] * st_portion_gaussian)
+          dispersal_seeds[, spe.id, tt] <- rpois(nplot, pmax(total_pop - stay_seeds[, spe.id, tt], 0))
+          seeds_before_disp[, spe.id, tt] <- new_seeds[, spe.id]
+          plot_abundance[, spe.id, tt + 1] <- stay_seeds[, spe.id, tt] + dispersal_seeds[, spe.id, tt]
         }
       } else {
         # initialize the update_seeds matrix
         update_seeds <- matrix(0, nrow = nplot, ncol = nspe)
 
         # stay seeds and dispersal seeds
-        stay_seeds[, , ts] <-
+        stay_seeds[, , tt] <-
           rpois(length(new_seeds), st_portion * new_seeds)
 
 
-        dis_seeds[, , ts] <-
+        dis_seeds[, , tt] <-
           rpois(length(new_seeds), (1 - st_portion) * new_seeds)
 
-        seeds_before_disp[, , ts] <-
-          stay_seeds[, , ts] + dis_seeds[, , ts]
+        seeds_before_disp[, , tt] <-
+          stay_seeds[, , tt] + dis_seeds[, , tt]
 
         # the seeds rain for each species by Poisson draws
-        seeds_rain <- colSums(dis_seeds[, , ts, drop = FALSE])
+        seeds_rain <- colSums(dis_seeds[, , tt, drop = FALSE])
 
         # dispersal seeds
         if (distribution == "uniform") {
@@ -181,7 +187,7 @@ plantsim <-
         }
 
         for (spe_ind in c(1:nspe)) {
-          dispersal_seeds[, spe_ind, ts] <-
+          dispersal_seeds[, spe_ind, tt] <-
             if (seeds_rain[spe_ind] < .Machine$integer.max) {
               stats::rmultinom(1, seeds_rain[spe_ind], prob = prob_dis)
             }
@@ -191,9 +197,13 @@ plantsim <-
         }
         # seeds rain joins the local seeds
         update_seeds <-
-          stay_seeds[, , ts] + dispersal_seeds[, , ts]
+          stay_seeds[, , tt] + dispersal_seeds[, , tt]
+
+        # kill individuals in bad cells
+        update_seeds[sample_cells, ] <- 0
+
         # apply survival rate to seeds
-        plot_abundance[, , ts + 1] <- update_seeds
+        plot_abundance[, , tt + 1] <- update_seeds
       }
 
     }
