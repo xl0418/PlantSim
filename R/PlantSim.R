@@ -115,7 +115,6 @@ plantsim <-
 
       if (boundary){
         #calculating the distance between all populations.
-
         dmat <- sqrt(outer(xy[,1], xy[,1], "-")^2+outer(xy[,2], xy[,2], "-")^2)
 
         Dmat <- exp(-(dmat/sig_disp)^2) #gaussian seed dispersal kernel with variance sig_disp
@@ -162,10 +161,17 @@ plantsim <-
 
       if (distribution == "Gaussian") {
         for (spe.id in c(1:nspe)) {
-          total_pop <-as.vector(new_seeds[, spe.id] %*% Dmat)
-          stay_seeds[, spe.id, tt] <- rpois(nplot, new_seeds[, spe.id] * st_portion_gaussian)
+          # Poisson draw the number of seeds produced locally
+          new_seeds_pois <- rpois(nplot, new_seeds[, spe.id])
+          # Calculate the total number of seeds for each cell under Gaussian dispersal
+          total_pop <-as.vector(new_seeds_pois %*% Dmat)
+
+          # Calculate the number of stay seeds
+          stay_seeds[, spe.id, tt] <- rpois(nplot, new_seeds_pois * st_portion_gaussian)
+
+          # The number of seeds that land in the local cells
           dispersal_seeds[, spe.id, tt] <- rpois(nplot, pmax(total_pop - stay_seeds[, spe.id, tt], 0))
-          seeds_before_disp[, spe.id, tt] <- new_seeds[, spe.id]
+          seeds_before_disp[, spe.id, tt] <- new_seeds_pois
           plot_abundance[, spe.id, tt + 1] <- stay_seeds[, spe.id, tt] + dispersal_seeds[, spe.id, tt]
         }
       } else {
