@@ -2,7 +2,7 @@
 #'
 #' @param nplot The number of the plots in the community
 #' @param nspe The number of the species
-#' @param t The total time steps
+#' @param nt The total time steps
 #' @param ini_abundance The initial abundance of the species
 #' @param growth_rate The growth rate for each plot and each species. It could be universally same.
 #' @param interaction_matrix The interaction matrix among species
@@ -14,17 +14,18 @@
 #' @param model Specify local population models, i.e. Ricker, BH, PL, for the Ricker model, the Beverton-Holt model and the power law model.
 #' @param boundary If TRUE, the boundary effect is considered. Otherwise, the grid is a torus.
 #' @param cell_kill_rate The percentage of cells eliminates plant individuals.
+#' @param seed Set the seed for reproducibility of simulation.
 #' @return The abundance matrix for all plots and species through time.
 #' @importFrom stats rnorm rpois runif var
 #' @examples
-#' plantsim(nplot = 5, nspe = 2, t = 10, ini_abundance = matrix(1:10, 5, 2),
+#' plantsim(nplot = 5, nspe = 2, nt = 10, ini_abundance = matrix(1:10, 5, 2),
 #'  growth_rate = 1, interaction_matrix = matrix(0.001, 2, 2), st_portion = 0.7)
 #' @export
 #'
 plantsim <-
   function(nplot,
            nspe,
-           t,
+           nt,
            ini_abundance,
            growth_rate,
            interaction_matrix,
@@ -35,7 +36,11 @@ plantsim <-
            model = "Ricker",
            sig_disp = 1,
            boundary = FALSE,
-           cell_kill_rate = 0) {
+           cell_kill_rate = 0,
+           seed = FALSE) {
+    # Set seed
+    if(is.numeric(seed)) set.seed(seed)
+
     # Check if the initial abundance is compatible with the dim (nplot, nspe) or a constant that applies to every plot and species
     if (is.matrix(ini_abundance) &&
         all(dim(ini_abundance) == c(nplot, nspe))) {
@@ -82,16 +87,19 @@ plantsim <-
     }
 
     # sample the cells that will eliminate individuals
-    num_cells_kill <- ceiling(nplot * cell_kill_rate)
-    sample_cells <- sample(c(1:nplot), size = num_cells_kill)
+    if ( cell_kill_rate > 0) {
+      num_cells_kill <- ceiling(nplot * cell_kill_rate)
+      sample_cells <- sample(c(1:nplot), size = num_cells_kill)
+
+    }
 
     # initialize the community matrix
-    plot_abundance <- array(0, dim = c(nplot, nspe, t + 1))
-    stay_seeds <- array(0, dim = c(nplot, nspe, t))
-    dis_seeds <- array(0, dim = c(nplot, nspe, t))
+    plot_abundance <- array(0, dim = c(nplot, nspe, nt + 1))
+    stay_seeds <- array(0, dim = c(nplot, nspe, nt))
+    dis_seeds <- array(0, dim = c(nplot, nspe, nt))
 
-    dispersal_seeds <- array(0, dim = c(nplot, nspe, t))
-    seeds_before_disp <- array(0, dim = c(nplot, nspe, t + 1))
+    dispersal_seeds <- array(0, dim = c(nplot, nspe, nt))
+    seeds_before_disp <- array(0, dim = c(nplot, nspe, nt + 1))
     plot_abundance[, , 1] <- round(ini_abundance)
     seeds_before_disp[, , 1] <- round(ini_abundance)
     if (distribution == "Gaussian") {
@@ -123,7 +131,7 @@ plantsim <-
     }
 
     # Ricker model
-    for (tt in c(1:t)) {
+    for (tt in c(1:nt)) {
       # initialize the new seeds gain matrix
       new_seeds <- matrix(0, nrow = nplot, ncol = nspe)
       # Producing the seeds for each spec and in each plot following the Ricker model
@@ -199,11 +207,13 @@ plantsim <-
         update_seeds <-
           stay_seeds[, , tt] + dispersal_seeds[, , tt]
 
-        # kill individuals in bad cells
-        update_seeds[sample_cells, ] <- 0
-
         # apply survival rate to seeds
         plot_abundance[, , tt + 1] <- update_seeds
+      }
+
+      # kill individuals in bad cells
+      if ( cell_kill_rate > 0) {
+        plot_abundance[sample_cells, , tt + 1] <- 0
       }
 
     }
@@ -216,10 +226,10 @@ plantsim <-
     }
     return(
       list(
-        all = plot_abundance[, , 1:t, drop = FALSE],
+        all = plot_abundance[, , 1:nt, drop = FALSE],
         stay = stay_seeds,
         dispersal = dispersal_seeds,
-        bef_dispersal = seeds_before_disp[, , 1:t, drop = FALSE],
+        bef_dispersal = seeds_before_disp[, , 1:nt, drop = FALSE],
         st_rate = ifelse(distribution == "Gaussian", st_portion_gaussian, st_portion)
       )
     )

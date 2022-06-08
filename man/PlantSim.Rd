@@ -7,7 +7,7 @@
 plantsim(
   nplot,
   nspe,
-  t,
+  nt,
   ini_abundance,
   growth_rate,
   interaction_matrix,
@@ -17,7 +17,9 @@ plantsim(
   distribution = "uniform",
   model = "Ricker",
   sig_disp = 1,
-  boundary = FALSE
+  boundary = FALSE,
+  cell_kill_rate = 0,
+  seed = FALSE
 )
 }
 \arguments{
@@ -25,7 +27,7 @@ plantsim(
 
 \item{nspe}{The number of the species}
 
-\item{t}{The total time steps}
+\item{nt}{The total time steps}
 
 \item{ini_abundance}{The initial abundance of the species}
 
@@ -46,6 +48,10 @@ plantsim(
 \item{sig_disp}{The variance of the dispersal for the Gaussian dispersal kernel.}
 
 \item{boundary}{If TRUE, the boundary effect is considered. Otherwise, the grid is a torus.}
+
+\item{cell_kill_rate}{The percentage of cells eliminates plant individuals.}
+
+\item{seed}{Set the seed for reproducibility of simulation.}
 }
 \value{
 The abundance matrix for all plots and species through time.
@@ -54,6 +60,6 @@ The abundance matrix for all plots and species through time.
 Simulate a plant community
 }
 \examples{
-plantsim(nplot = 5, nspe = 2, t = 10, ini_abundance = matrix(1:10, 5, 2),
+plantsim(nplot = 5, nspe = 2, nt = 10, ini_abundance = matrix(1:10, 5, 2),
  growth_rate = 1, interaction_matrix = matrix(0.001, 2, 2), st_portion = 0.7)
 }

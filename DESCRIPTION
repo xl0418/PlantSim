@@ -8,7 +8,7 @@ Description: One can simulate a plant commnity by indicating the number of the p
 License: GPL-2 | GPL-3
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2
 Imports:
   stats,
   som.nn
