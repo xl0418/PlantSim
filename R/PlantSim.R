@@ -15,6 +15,7 @@
 #' @param boundary If TRUE, the boundary effect is considered. Otherwise, the grid is a torus.
 #' @param cell_kill_rate The percentage of cells eliminates plant individuals.
 #' @param seed Set the seed for reproducibility of simulation.
+#' @param hetero Set the environment heterogeneity mode: 1. randomly choose bad cells and keep fixed in time; 2. randomly choose bad cells for every time step; 3. a fixed pattern of bad cells is assigned, i.e. every ith cell is chosen to be bad based on the kill rate.
 #' @return The abundance matrix for all plots and species through time.
 #' @importFrom stats rnorm rpois runif var
 #' @examples
@@ -37,7 +38,8 @@ plantsim <-
            sig_disp = 1,
            boundary = FALSE,
            cell_kill_rate = 0,
-           seed = FALSE) {
+           seed = FALSE,
+           hetero = "1") {
     # Set seed
     if(is.numeric(seed)) set.seed(seed)
 
@@ -87,7 +89,7 @@ plantsim <-
     }
 
     # sample the cells that will eliminate individuals
-    if ( cell_kill_rate > 0) {
+    if ( cell_kill_rate > 0 & hetero == "1") {
       num_cells_kill <- ceiling(nplot * cell_kill_rate)
       sample_cells <- sample(c(1:nplot), size = num_cells_kill)
 
@@ -131,6 +133,17 @@ plantsim <-
 
     # Ricker model
     for (tt in c(1:nt)) {
+      # sample the cells that will eliminate individuals
+      if ( cell_kill_rate > 0 & hetero == "2") {
+        num_cells_kill <- ceiling(nplot * cell_kill_rate)
+        sample_cells <- sample(c(1:nplot), size = num_cells_kill)
+
+      } else if ( cell_kill_rate > 0 & hetero == "3") {
+        num_cells_kill <- ceiling(nplot * cell_kill_rate)
+        sample_cells <- seq(1, nplot, nplot / num_cells_kill)
+      }
+
+
       # initialize the new seeds gain matrix
       new_seeds <- matrix(0, nrow = nplot, ncol = nspe)
       # Producing the seeds for each spec and in each plot following the Ricker model

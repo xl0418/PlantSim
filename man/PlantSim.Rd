@@ -19,7 +19,8 @@ plantsim(
   sig_disp = 1,
   boundary = FALSE,
   cell_kill_rate = 0,
-  seed = FALSE
+  seed = FALSE,
+  hetero = "1"
 )
 }
 \arguments{
@@ -52,6 +53,8 @@ plantsim(
 \item{cell_kill_rate}{The percentage of cells eliminates plant individuals.}
 
 \item{seed}{Set the seed for reproducibility of simulation.}
+
+\item{hetero}{Set the environment heterogeneity mode: 1. randomly choose bad cells and keep fixed in time; 2. randomly choose bad cells for every time step;}
 }
 \value{
 The abundance matrix for all plots and species through time.
